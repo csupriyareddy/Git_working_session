@@ -1,1 +1,47 @@
-Adding new file to my code base
+from selenium.webdriver.support.wait import WebDriverWait
+import allure
+
+class Utils():
+
+    driver=None
+    @pytest.fixture(scope="session")
+    def SetUp(self):
+        config=self.getEnvironmentDetails()
+        self.invokeApplication(config)
+
+    @allure.step("Click element {1} on the page {2}")
+    def clickElement(self,elementname,page,xpath):
+        WebDriverWait(Utils.driver,35).until(EC.presence_of_element_located((By.XPATH,xpath)))
+        Utils.driver.find_element_by_xpath(xpath).click()
+
+    @allure.step("Enter data for the element {1} on the page {2}")
+    def sendData(self,elementname,page,xpath,data):
+        WebDriverWait(Utils.driver, 35).until(EC.presence_of_element_located((By.XPATH, xpath)))
+        element = self.driver.find_element_by_xpath(xpath)
+        action = ActionChains(self.driver)
+        action.move_to_element(element).perform()
+        action.click(element).perform()
+        element.clear()
+        element.send_keys(data)
+
+    def selectdropdownvalue(self, xpath, data):
+        WebDriverWait(Utils.driver, 35).until(EC.presence_of_element_located((By.XPATH, xpath)))
+        dropdown = self.driver.find_element_by_xpath(xpath)
+        dropdownvalue = Select(dropdown)
+        dropdownvalue.select_by_visible_text(data)
+
+    def invokeApplication(self,config):
+        Utils.driver = webdriver.Chrome(executable_path="../Drivers/chromedriver.exe")
+        Utils.driver.get(config.get("APPLICATION_URL","URL"))
+        Utils.driver.maximize_window()
+        Utils.driver.implicitly_wait(35)
+
+    def getEnvironmentDetails(self):
+        configur=ConfigParser()
+        configur.read("../configurations/environment.cnf")
+        return configur
+
+    def getScreenshots(self,screenshotname):
+        allure.attach(Utils.driver.get_screenshot_as_png(), name=screenshotname,attachment_type=AttachmentType.PNG)
+
+
